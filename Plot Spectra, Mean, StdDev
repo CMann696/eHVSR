@@ -1,0 +1,77 @@
+#%% Plot Spectra, Mean, and Standard Deviation together
+
+# Define the frequency range of interest
+min_freq_of_interest = 0.1
+max_freq_of_interest = 15
+
+# Initialize list to store mean spectra, standard deviations, and station-channel pairs
+all_mean_spectra = []
+all_std_deviations = []
+station_channel_pairs = []
+
+# Calculate mean spectra and standard deviations for each station/trace
+for key, spectra_list in spectra_by_station.items():
+    network, station, channel = key
+    
+    # Store station and channel as a tuple in the list
+    station_channel_pairs.append((station, channel))
+
+    # Create lists to store power spectra within the frequency range
+    spectra_within_range = []
+    
+    for spectrum in spectra_list:
+        freqs = np.linspace(0.1, len(spectrum), num=len(spectrum))  # Ensure correct frequency mapping if needed
+        indices_of_interest = np.where((min_freq_of_interest <= freqs) & (freqs <= max_freq_of_interest))
+        filtered_spectrum = spectrum[indices_of_interest]
+        spectra_within_range.append(filtered_spectrum)
+    
+    # Calculate the mean spectrum and standard deviation
+    mean_spectrum = np.mean(spectra_within_range, axis=0)
+    std_deviation = np.std(spectra_within_range, axis=0)
+    
+    # Append the calculated mean spectrum and standard deviation to lists
+    all_mean_spectra.append(mean_spectrum)
+    all_std_deviations.append(std_deviation)
+
+# Set the figure size and font size for plotting
+fig_size = (15, 10)
+font_size = 22
+
+# Plot Spectra, Mean, and Standard Deviation together
+for key, spectra_list in spectra_by_station.items():
+    network, station, channel = key
+    fig, ax1 = plt.subplots(figsize=fig_size)
+
+    # Plot each spectrum within the list for the station-channel
+    for spectrum in spectra_list:
+        freqs = np.linspace(0.1, len(spectrum), num=len(spectrum))
+        indices_of_interest = np.where((min_freq_of_interest <= freqs) & (freqs <= max_freq_of_interest))
+        filtered_spectrum = spectrum[indices_of_interest]
+        ax1.semilogx(freqs[indices_of_interest], filtered_spectrum, color='grey', alpha=0.5)
+
+    ax1.set_xlim(min_freq_of_interest, max_freq_of_interest)
+    ax1.set_ylim(bottom=0)
+    
+    ax2 = ax1.twinx()
+
+    # Find the correct index using station and channel pair
+    index = station_channel_pairs.index((station, channel))
+    mean_spectrum = all_mean_spectra[index]
+    std_deviation = all_std_deviations[index]
+
+    ax2.semilogx(np.linspace(min_freq_of_interest, max_freq_of_interest, len(mean_spectrum)), mean_spectrum, linewidth=4, color='red')
+    ax2.fill_between(np.linspace(min_freq_of_interest, max_freq_of_interest, len(std_deviation)),
+                     mean_spectrum - std_deviation,
+                     mean_spectrum + std_deviation,
+                     color='teal', alpha=0.5)
+    
+    y1_min, y1_max = ax1.get_ylim()
+    ax2.set_ylim(y1_min, y1_max)
+
+    ax1.set_ylabel("Original Spectrum", fontsize=28)
+    ax2.set_ylabel("Mean Spectrum ± Std Dev", fontsize=28)
+    ax1.legend(['Original Spectrum'], loc='upper left', fontsize=font_size)
+    ax2.legend(['Mean Spectrum ± 1$\sigma$'], loc='upper right', fontsize=font_size)
+    plt.title(f"Full Spectral Analysis\n{station} - {channel}", fontsize=28)
+
+    plt.show()
