@@ -1,0 +1,37 @@
+# %% Gather Station Inventory
+
+# Initialize list to store inventory
+sta_inventory = []
+
+# Fetch stations for each station code and append to the list
+for station_code in all_stations:
+    sta_inventory += client.get_stations(network=netcode, station=station_code, channel=channels, minlatitude=minlat, maxlatitude=maxlat, minlongitude=minlon, maxlongitude=maxlon)
+
+# Fetch and generate catalog of events
+eq_catalog = client.get_events(starttime=stime, endtime=etime, 
+                               latitude=central_lat, longitude=central_lon, 
+                               minradius=search_radius_min, maxradius=search_radius_max, 
+                               minmagnitude=3)
+
+## Extract station information and append to lists:
+st_net = []
+st_lons = []
+st_lats = []
+st_stas = []
+st_start_year = [] 
+for network in sta_inventory:
+    for station in network:
+        st_net.append(network.code)
+        st_stas.append(station.code)
+        st_lons.append(station.longitude)
+        st_lats.append(station.latitude)
+        st_start_year.append(station.start_date.year)
+
+# Create dictionary for dataframe
+stdict = {'stNet':st_net, 'stName':st_stas, 'stlon':st_lons, 'stlats':st_lats}
+
+# Create dataframe from dictionary
+stdf = pd.DataFrame(stdict)
+
+# Save dataframe to your metadata directory
+stdf.to_csv(meta_dir + '[Your_File_Name].csv',index=False) # Make sure to specify your preferred file name
