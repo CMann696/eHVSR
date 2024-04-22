@@ -1,0 +1,24 @@
+#%% Extract event information:
+
+# Generate empty lists
+ev_lons = []
+ev_lats = []
+ev_depth = []
+ev_origint = []
+ev_mag = []
+
+# Append event information to lists if found in event catalog
+for event in eq_catalog:
+    ev_lons.append(event.origins[0].longitude)
+    ev_lats.append(event.origins[0].latitude)
+    ev_depth.append(event.origins[0].depth)
+    ev_origint.append(event.origins[0].time)
+    ev_mag.append(event.magnitudes[0].mag)
+    
+## Write out event metadata to file to use later:
+evdict = {'evlon':ev_lons, 'evlats':ev_lats, 'evdepth':ev_depth,
+          'evM':ev_mag, 'evorigint':ev_origint}
+evdf = pd.DataFrame(evdict)
+
+# Save event dataframe
+evdf.to_csv(meta_dir + '[Your_File_Name].csv',index=False) # Set your own file name
