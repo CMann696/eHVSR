@@ -13,7 +13,7 @@ The order of functions in the process are as follows:
 2) Gather Station Inventory
 3) Extract Event Information
 4) Make Metadata DataFrame
-5) Download Waveforms (Not yet included)
+5) Download Waveforms (Needs work)
 6) Spectral Analysis (mtspec)
 7) Mean Spectra and StdDev
 8) Peak Mean Amplitude
