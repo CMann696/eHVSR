@@ -1,0 +1,48 @@
+#%% Import packages
+import numpy as np
+import matplotlib.pyplot as plt
+import obspy as obs
+from obspy.clients.fdsn.client import Client
+from obspy.geodetics.base import gps2dist_azimuth
+from obspy.geodetics.base import kilometers2degrees
+from obspy.taup import TauPyModel
+from obspy.core.utcdatetime import UTCDateTime
+import pandas as pd
+from obspy import read
+from mtspec import mtspec
+import os
+
+# Assign directory locations
+mseed_dir = '/your/mseed/directory/path/'
+fig_dir = '/your/figures/directory/path/'
+meta_dir = '/your/metadata/directory/path/'
+
+# Set lat/lon search area for stations
+minlat = 44.0
+maxlat = 46.0
+minlon = -123.5
+maxlon = -122.5
+
+# Set great circle search area for events
+central_lat = 44.9426
+central_lon = -123.0351
+search_radius_min = 0
+search_radius_max = 2.5
+
+# Set time period of interest to search stations and events
+stime = UTCDateTime("2001-01-01T000000.000")
+etime = UTCDateTime("2001-01-31T000000.000")
+
+# Set minimum depth
+min_depth = 6
+
+# Specify network(s), stations, channels to search for download
+netcode = 'UO,UW'
+all_stations = '*'
+channels = 'EN*'
+
+# Specify client
+client = Client('IRIS')
+
+# model preference
+model = TauPyModel(model="iasp91")   
