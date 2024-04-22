@@ -12,37 +12,37 @@ from obspy import read
 from mtspec import mtspec
 import os
 
-# Assign directory locations
-mseed_dir = '/your/mseed/directory/path/'
-fig_dir = '/your/figures/directory/path/'
-meta_dir = '/your/metadata/directory/path/'
+# Assign directory locations 
+mseed_dir = '/your/mseed/directory/path/' # Change to your own directory path to save miniseed files
+fig_dir = '/your/figures/directory/path/' # Change to your own directory path to save figures/plots
+meta_dir = '/your/metadata/directory/path/' # Change to your own directory path to save metadata
 
 # Set lat/lon search area for stations
-minlat = 44.0
-maxlat = 46.0
-minlon = -123.5
-maxlon = -122.5
+minlat = 44.0 # Change to your preferred minimum latitude
+maxlat = 46.0 # Change to your preferred maximum latitude
+minlon = -123.5 # Change to your preferred minimum longitude
+maxlon = -122.5 # Change to your preferred maximum longitude
 
 # Set great circle search area for events
-central_lat = 44.9426
-central_lon = -123.0351
-search_radius_min = 0
-search_radius_max = 2.5
+central_lat = 44.9426 # Change to your preferred central latitude
+central_lon = -123.0351 # Change to your preferred central longitude
+search_radius_min = 0 # Change to your preferred minimum search radius
+search_radius_max = 2.5 # Change to your preferred maximum search radius
 
 # Set time period of interest to search stations and events
-stime = UTCDateTime("2001-01-01T000000.000")
-etime = UTCDateTime("2001-01-31T000000.000")
+stime = UTCDateTime("2001-01-01T000000.000") # Set your preferred start time
+etime = UTCDateTime("2001-01-31T000000.000") # Set your preferred end time
 
 # Set minimum depth
-min_depth = 6
+min_depth = 6 # Set your preferred minimum depth (km)
 
 # Specify network(s), stations, channels to search for download
-netcode = 'UO,UW'
-all_stations = '*'
-channels = 'EN*'
+netcode = 'UO,UW' # Change to network(s) you wish to search
+all_stations = '*' # Set station names you wish to search for (leave as is to search for all on specified network(s))
+channels = 'EN*' # This will search for strong motion channels (ENE, ENN, ENZ) on station(s) specified (Do not change)
 
 # Specify client
-client = Client('IRIS')
+client = Client('IRIS') # Change client, if needed
 
 # model preference
 model = TauPyModel(model="iasp91")   
