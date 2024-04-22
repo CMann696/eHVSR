@@ -31,3 +31,11 @@ Future plotting code additions may include:
 2) Plotting station and event locations
 3) Plotting spatial variability
 4) Plotting azimuthal variability
+
+Python packages needed:
+1) numpy
+2) matplotlib.pyplot
+3) obspy
+4) pandas
+5) mtspec
+It is recommended to create a new environment for these packages, as mtspec is no longer supported and may required downgraded components to install. 
