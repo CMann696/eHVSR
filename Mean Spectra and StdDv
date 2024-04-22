@@ -1,0 +1,49 @@
+#%% Calculate mean spectra and standard deviations from all events for each station/trace
+
+# Define the frequency range of interest
+min_freq_of_interest = 0.1 # Set minimum frequency of interest
+max_freq_of_interest = 15 # Set maximum frequency of interest
+
+# Initialize lists to store mean spectra and standard deviations
+all_mean_spectra = []
+all_std_deviations = []
+station_names = []
+channels = []
+
+# Iterate through each station and calculate mean spectra and standard deviations
+for key, spectra_list in spectra_by_station.items():
+    network, station, channel = key
+    
+    # Store station name and channel information
+    station_names.append(station)
+    channels.append(channel)
+
+    # Create lists to store power spectra within the frequency range
+    spectra_within_range = []
+    
+    # Iterate through each trace in the station and filter its power spectrum within the frequency range
+    for spectrum in spectra_list:
+        freqs = np.linspace(0.1, len(spectrum), num=len(spectrum))  # Frequency range from 0.1 to length of spectrum
+        
+        # Filter the power spectrum within the frequency range of interest
+        indices_of_interest = np.where((min_freq_of_interest <= freqs) & (freqs <= max_freq_of_interest))
+        filtered_spectrum = spectrum[indices_of_interest]
+        
+        # Store the filtered power spectrum for calculating mean and standard deviation
+        spectra_within_range.append(filtered_spectrum)
+    
+    # Calculate the arithmetic mean spectrum and standard deviation for the station (Can change)
+    mean_spectrum = np.mean(spectra_within_range, axis=0)
+    std_deviation = np.std(spectra_within_range, axis=0)
+    
+    # Append the mean spectrum and standard deviation to the lists
+    all_mean_spectra.append(mean_spectrum)
+    all_std_deviations.append(std_deviation)
+
+# Convert the lists to numpy arrays
+all_mean_spectra = np.array(all_mean_spectra)
+all_std_deviations = np.array(all_std_deviations)
+
+# Print the shapes of the arrays to verify
+print("Shape of All Mean Spectra Array:", all_mean_spectra.shape)
+print("Shape of All Standard Deviations Array:", all_std_deviations.shape)
