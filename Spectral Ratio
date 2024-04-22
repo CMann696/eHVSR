@@ -1,0 +1,16 @@
+#%% H/V calculations
+ratio = []
+
+# Iterate through each station in vertical_peak
+for station_vp, vp_value in vertical_peak:
+    # Iterate through each station in geometric_means
+    for station_gm, gm_value in geometric_means:
+        # Check if the stations match
+        if station_vp == station_gm:
+            # Perform division and append station name and result to the ratio list
+            result = gm_value / vp_value
+            ratio.append((station_vp, result))
+            # Break the inner loop to move to the next station in vertical_peak
+            break
+
+print(ratio)
