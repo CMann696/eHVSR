@@ -1,0 +1,87 @@
+#%% Make dataframe with station repeated, use this info for downloading waveforms in next step
+
+# Initialize list to store data
+distances_all = [] 
+sta_df_all = [] 
+ev_mag_df_all = [] 
+ev_origintime_df_all = [] 
+ev_collecttime_all = []  
+ev_endtime_all = [] 
+evdf_lat_all = [] 
+evdf_lon_all = [] 
+evdf_depth_all = [] 
+netcode_df_all = []
+
+# Read the station inventory CSV file
+try:
+    station_inventory_df = pd.read_csv(meta_dir + '[Your_Station_Inventory_File_Name].csv') # Change to your file name
+except FileNotFoundError:
+    print("Error: Station inventory file not found.")
+    exit()
+
+# Create a dictionary to map station names to network codes
+station_network_map = dict(zip(station_inventory_df['stName'], station_inventory_df['stNet']))
+
+# Iterate through station names and retrieve corresponding latitudes/longitudes
+for i_station in range(len(st_stas)):
+    i_stlon = st_lons[i_station]
+    i_stlat = st_lats[i_station]
+    
+    # Get the station name
+    station_name = st_stas[i_station]
+    
+    # Get the network code from the station_network_map dictionary
+    network_code = station_network_map.get(station_name, "Unknown")
+
+    # Iterate through events in event catalog for each station name
+    for event in eq_catalog:    
+        try:
+            # Add station name to the list
+            sta_df_all.append(station_name)
+            
+            # Append event info
+            evdf_lat_all.append(event.origins[0].latitude)
+            evdf_lon_all.append(event.origins[0].longitude)
+            evdf_depth_all.append(event.origins[0].depth)
+            
+            # Calculate great circle distance between this event and the station
+            ij_grcircle_distance = gps2dist_azimuth(i_stlat, i_stlon, event.origins[0].latitude, event.origins[0].longitude)
+            ij_grcircle_distance_km = ij_grcircle_distance[0]/1000
+            ij_degrees = kilometers2degrees(ij_grcircle_distance_km)
+            
+            # Calculate p-wave travel time
+            ij_pwv_ttime_allP = model.get_travel_times(source_depth_in_km=event.origins[0].depth/1000,
+                                      distance_in_degree=ij_degrees,phase_list=["p","P"])
+            ij_pwv_ttime = ij_pwv_ttime_allP[0].time
+            
+            # Start collecting waveform data 10 seconds before predicted p-wave arrival
+            ev_collecttime_all.append(event.origins[0].time + (ij_pwv_ttime - 10)) # Change collect time, as needed
+            
+            # Collect data for a total of 120 seconds
+            ev_endtime_all.append(event.origins[0].time + (ij_pwv_ttime - 10) + 120) # Change collection duration, as needed
+            
+            # Append other data to respective lists
+            distances_all.append(ij_grcircle_distance_km)
+            ev_mag_df_all.append(event.magnitudes[0].mag)
+            ev_origintime_df_all.append(event.origins[0].time)
+            
+            # Append network code for this station-event pair
+            netcode_df_all.append(network_code)
+        except Exception as e:
+            print(f"Error processing event: {e}")
+
+# Create the metadata dictionary
+metadata_all = {'netcode': netcode_df_all, 
+                'distance': distances_all, 
+                'stations': sta_df_all, 
+                'mag': ev_mag_df_all, 
+                'origint': ev_origintime_df_all, 
+                'collecttime': ev_collecttime_all, 
+                'endtime': ev_endtime_all,
+                'evlat': evdf_lat_all, 
+                'evlon': evdf_lon_all, 
+                'evdepth': evdf_depth_all}
+
+# Create DataFrame and save to file
+metadata_all_df = pd.DataFrame(metadata_all)
+metadata_all_df.to_csv((meta_dir + '[Your_File_Name].csv'), index=False) # Change to your preferred file name
