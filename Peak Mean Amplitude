@@ -1,0 +1,24 @@
+#%% Obtain peak mean amplitude and frequency
+
+# Initialize lists to store information about the single greatest peak for each station/trace combination
+greatest_peak_amplitudes = []
+greatest_peak_frequencies = []
+station_channel_combinations = []
+
+# Iterate through each station and calculate the single greatest peak
+for i, (mean_spectrum, _) in enumerate(zip(all_mean_spectra, all_std_deviations)):
+    # Find the index of the maximum amplitude in the mean spectrum
+    max_index = np.argmax(mean_spectrum)
+    
+    # Get the amplitude and frequency of the greatest peak
+    greatest_peak_amplitude = mean_spectrum[max_index]
+    greatest_peak_frequency = np.linspace(min_freq_of_interest, max_freq_of_interest, len(mean_spectrum))[max_index]
+    
+    # Append the information to the lists
+    greatest_peak_amplitudes.append(greatest_peak_amplitude)
+    greatest_peak_frequencies.append(greatest_peak_frequency)
+    station_channel_combinations.append((station_names[i], channels[i]))
+
+# Print the information
+for station_channel, amplitude, frequency in zip(station_channel_combinations, greatest_peak_amplitudes, greatest_peak_frequencies):
+    print(f"Station/Channel: {station_channel}, Amplitude: {amplitude}, Frequency: {frequency}")
