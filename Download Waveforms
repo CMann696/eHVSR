@@ -1,0 +1,112 @@
+#%% Download strong motion waveform data and remove instrument response 
+#### Note: This is a work in progress, and will be receiving adjustents. It is not currently correct. ####
+
+mseed_dir = '/Users/Charity/Desktop/HVSR_SM/mseed/'
+fig_dir = '/Users/Charity/Desktop/HVSR_SM/fig/'
+meta_dir = '/Users/Charity/Desktop/HVSR_SM/meta/'
+
+client = Client('IRIS')
+channels = "ENE", "ENN", "ENZ"  # Corrected channels list
+pre_filt = [0.001, 0.005, 95, 100]
+
+metadata = '/Users/Charity/Desktop/HVSR_SM/meta/UO_UW_metadata_all_ev2sta.csv'
+metadata_df = pd.read_csv(metadata)
+
+all_channels = np.full_like(metadata_df.netcode.values, '')
+
+dlsuccess = [False] * len(metadata_df)
+
+# Loop over each row in the metadata
+for recording_i in range(len(metadata_df)):
+    print("Processing line:", recording_i)  # Print the current line number
+    
+    # Initialize a counter to track the number of downloaded channels
+    j_component_counter = 0
+    
+    # Initialize an empty stream to hold the waveform data
+    i_st = obs.core.stream.Stream()
+    
+    # Loop over each channel in the specified channels
+    for channel_name in channels:
+        try:
+            # Convert starttime and endtime to UTCDateTime objects
+            start_time = UTCDateTime(metadata_df.collecttime[recording_i])
+            end_time = UTCDateTime(metadata_df.endtime[recording_i])
+            
+            # Attempt to download waveform data for the current channel
+            i_st += client.get_waveforms(network=metadata_df.netcode[recording_i], 
+                                         station=metadata_df.stations[recording_i], 
+                                         location="*", 
+                                         channel=channel_name, 
+                                         starttime=start_time, 
+                                         endtime=end_time, 
+                                         attach_response=True)
+            
+            # Increment the counter if data is successfully downloaded for the channel
+            j_component_counter += 1
+        except Exception as e:
+            # If an error occurs, print the error message
+            print('Error:', e)
+    
+    # Check if data is available for all three channels
+    if j_component_counter == 3:
+        # If data is available for all three channels, proceed with response removal and saving
+        print('Data exists on all three channels, removing response...')
+        
+        # Retry response removal if it fails initially 
+        max_retry = 3
+        retry_count = 0
+        while retry_count < max_retry:
+            try:
+                # Iterate over each trace in the stream and remove the response
+                for trace in i_st:
+                    #Assign pre_filt parameters 
+                    respfilt_bottom = [0.063, 0.28] #0.063 just above 16 sec microsiesem, 0.28 just above 4 sec
+                    nyquist_freq = i_st[0].stats.sampling_rate / 2 #Get nyquist
+                    pre_filt = [respfilt_bottom[0], respfilt_bottom[1], nyquist_freq - 5, nyquist_freq] #assign pre_filt
+                    
+                    #Remove response
+                    sensitivity = trace.stats.response.instrument_sensitivity.value
+                    trace.data = trace.data / sensitivity
+
+                    print('Response successfully removed.')
+                    
+                    # Remove pre-event baseline mean
+                    print('Removing pre-event baseline mean for channel', trace.stats.channel)
+                    ij_5sec_index = np.where(trace.times() <= 5)[0]
+                    ij_preeventmean = np.mean(trace.data[ij_5sec_index])
+                    trace.data = trace.data - ij_preeventmean
+                    print('Pre-event baseline mean removed.')
+                
+                break  # Exit the loop if response removal is successful
+            except Exception as e:
+                print('Error removing response:', e)
+                retry_count += 1
+                if retry_count == max_retry:
+                    print('Max retries reached. Skipping to the next record.')
+                    break  # Exit the loop if max retries reached
+        
+        # If response removal is successful, proceed with saving the data
+        if retry_count < max_retry:
+            # Construct the file path for saving the data
+            i_datetime = UTCDateTime(metadata_df.collecttime[recording_i]).datetime
+            i_time_for_path = f'{i_datetime.year}{i_datetime.month}{i_datetime.day}T{i_datetime.hour}{i_datetime.minute}{i_datetime.second}'
+            i_network = metadata_df.netcode[recording_i]
+            i_station = metadata_df.stations[recording_i]
+            i_mag = int(metadata_df.mag[recording_i])
+            i_distance = int(metadata_df.distance[recording_i])
+            i_mseedpath = f'{mseed_dir}{i_network}_{i_station}_{i_mag}_{i_distance}km_{i_time_for_path}.mseed' 
+            
+            # Save the stream data as MiniSEED format
+            i_st.write(i_mseedpath, format='mseed')
+    else:
+        # If data is not available for all three channels, mark the download as unsuccessful
+        print('Data missing for some channels.')
+
+# Count the number of files in the mseed directory
+num_files = len(os.listdir(mseed_dir))
+print('Number of files in', mseed_dir, ':', num_files)
+
+metadata_df['channels'] = all_channels
+dl_metadata_df = metadata_df[dlsuccess].reset_index(drop=True)
+dl_metadata_df.to_csv((meta_dir + 'metdata_dldata.csv'), index=False)  # Fixed parenthesis
