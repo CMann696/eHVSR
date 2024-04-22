@@ -1,0 +1,17 @@
+#%% Extract vertical max peak from peak amplitudes
+
+vertical_peak = []
+
+# Iterate through each station-channel combination
+for station, channel in station_channel_combinations:
+    # Check if the channel is ENZ
+    if channel == 'ENZ':
+        # Find the index of the station-channel combination in the list
+        index = station_channel_combinations.index((station, channel))
+        # Extract the corresponding peak amplitude
+        value = greatest_peak_amplitudes[index]
+        # Append station name and peak value as a tuple to the vertical_peak list
+        vertical_peak.append((station, value))
+
+print(vertical_peak)
+print(geometric_means)
