@@ -1,0 +1,40 @@
+#%% Perform spectral analysis using mtspec
+
+# Directory containing waveform files
+waveform_dir = "/Your/Minseed/File/Path/" # Update your file path to miniseed files
+
+# Dictionary to store spectra for each station on each trace
+spectra_by_station = {}
+
+# Iterate through the directory of waveform files
+for filename in os.listdir(waveform_dir):
+    if filename.endswith(".mseed"):
+        # Parse information from filename
+        parts = filename.split("_")
+        network = parts[0]
+        station = parts[1]
+        magnitude = float(parts[2])
+        distance_str = parts[3]  # Distance string including 'km'
+        # Remove 'km' from the distance string before converting to float
+        distance_km = float(distance_str.replace('km', ''))
+        
+        # Read waveform data
+        st = read(os.path.join(waveform_dir, filename))
+        
+        # Iterate through each trace in the stream
+        for trace in st:
+         
+            # Define parameters for spectral analysis
+            sampling_rate = trace.stats.sampling_rate
+            delta = 1.0 / sampling_rate  # Sampling interval
+            # Perform spectral analysis using mtspec
+            power_spectrum, freqs = mtspec(trace.data, delta=delta, time_bandwidth=4) # Adjust time_badwidth, as needed
+            
+            # Print spectral information
+            print(f"Filename: {filename}, Station: {station}, Channel: {trace.stats.channel}, Power spectrum: {power_spectrum}")
+            
+            # Store the spectral information for this station and trace
+            key = (network, station, trace.stats.channel)
+            if key not in spectra_by_station:
+                spectra_by_station[key] = []
+            spectra_by_station[key].append(power_spectrum)
