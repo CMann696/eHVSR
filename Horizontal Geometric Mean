@@ -1,0 +1,22 @@
+#%% Calculate geometric mean of horizontal components from peak spectral amplitudes
+
+# Initialize list to store geometric means
+geometric_means = []
+
+# Iterate through each station
+for station in set(station_names):
+    # Find the indices of channels ENE and ENN for the current station
+    indices = [i for i, (st, ch) in enumerate(station_channel_combinations) if st == station and ch in ['ENE', 'ENN']]
+    
+    # Extract amplitudes of ENE and ENN channels
+    amplitudes = [greatest_peak_amplitudes[i] for i in indices]
+    
+    # Calculate geometric mean
+    geometric_mean = np.prod(amplitudes) ** (1 / len(amplitudes))
+    
+    # Append station and geometric mean to the list
+    geometric_means.append((station, geometric_mean))
+
+# Print the information
+for station, mean in geometric_means:
+    print(f"Station: {station}, Geometric Mean of ENE and ENN: {mean}")
